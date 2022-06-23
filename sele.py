@@ -19,7 +19,6 @@ class Divar():
     def get_floor(self, row):
         floor_all = row.find_elements(By.XPATH,value=".//p[@class = 'kt-unexpandable-row__value']")[0].text
         floor= floor_all.split("از")[0]
-        print(floor)
         if (floor == "همکف"):
             floor = 0
         elif (floor == "زیرهمکف"):
@@ -28,32 +27,42 @@ class Divar():
             floor = int(unidecode(floor))
         return floor
 
+    def get_place(self):
+        rows =  self.driver2.find_elements(By.XPATH,value="//div[@class = 'kt-page-title__subtitle kt-page-title__subtitle--responsive-sized']")
+        text = rows[0].text
+        sp = text.split('،')
+        city = sp[0].split()[-1]
+        region = sp[1].split("|")[0]
+        return city, region
 
-    def get_vadie(self, row):
-        vadie_all = row.find_elements(By.XPATH,value=".//p[@class = 'kt-unexpandable-row__value']")[0].text
-        vadie= vadie_all.split(" ")[0]
-        if vadie == "توافقی":
-            vadie = -100
+
+    def get_deposit(self, row):
+        deposit_all = row.find_elements(By.XPATH,value=".//p[@class = 'kt-unexpandable-row__value']")[0].text
+        deposit= deposit_all.split(" ")[0]
+        if deposit == "توافقی":
+            deposit = -100
+        elif deposit == "مجانی":
+            deposit = 0
         else :
-            vadie = int(unidecode(vadie).replace(",",""))
-        return vadie
+            deposit = int(unidecode(deposit).replace(",",""))
+        return deposit
 
 
-    def get_ejare(self, row):
-        ejare_all = row.find_elements(By.XPATH,value=".//p[@class = 'kt-unexpandable-row__value']")[0].text
-        ejare= ejare_all.split(" ")[0]
-        if ejare == "توافقی":
-            ejare = -100
-        elif ejare == "مجانی":
-            ejare = 0
+    def get_rent(self, row):
+        rent_all = row.find_elements(By.XPATH,value=".//p[@class = 'kt-unexpandable-row__value']")[0].text
+        rent= rent_all.split(" ")[0]
+        if rent == "توافقی":
+            rent = -100
+        elif rent == "مجانی":
+            rent = 0
         else :
-            ejare = int(unidecode(ejare).replace(",",""))
-        return ejare
+            rent = int(unidecode(rent).replace(",",""))
+        return rent
 
 
     def get_one_home_info(self, url):
-        ejare = -100
-        vadie = -100
+        rent = -100
+        deposit = -100
         floor = -100
         self.driver2.get(url)
         rows =  self.driver2.find_elements(By.XPATH,value="//div[@class = 'kt-base-row kt-base-row--large kt-unexpandable-row']")
@@ -62,10 +71,19 @@ class Divar():
             if row_name == "طبقه":
                 floor = self.get_floor(row)
             if row_name == "ودیعه":
-                vadie = self.get_vadie(row)
+                deposit = self.get_deposit(row)
             if row_name == "اجارهٔ ماهانه":
-                ejare = self.get_ejare(row)
-        print(f"vadie : {vadie}  , ejare : {ejare}  , floor : {floor}")
+                rent = self.get_rent(row)
+        city, region = self.get_place()
+        column = self.driver2.find_elements(By.XPATH,value="//span[@class = 'kt-group-row-item__value']")
+        area = int(unidecode(column[0].text))
+        age = int(unidecode(column[1].text.split()[-1]))
+        if(column[2].text == "بدون اتاق"):
+            rooms = 0
+        else:
+            rooms = int(unidecode(column[2].text))
+        print(f"deposit : {deposit}  , rent : {rent}  , floor : {floor} , area : {area} , age : {age} , rooms : {rooms} , city : {city}, region : {region}")
+        
 
     def run(self):
         all_results =self.driver1.find_elements(By.XPATH,value="//section[@class = 'post-card-item kt-col-6 kt-col-xxl-4']")
