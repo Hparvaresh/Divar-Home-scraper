@@ -1,19 +1,17 @@
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from datetime import datetime
 from selenium.webdriver.chrome.service import Service
 from unidecode import unidecode
-from selenium.webdriver.support import expected_conditions as EC
 from utils.DataBaseClass import DBMongo
-
+from tqdm import tqdm
 
 class Divar():
     def __init__(self):
         self.url="https://divar.ir/s/tehran/rent-residential"
         op = webdriver.ChromeOptions()
         op.add_argument('headless')
-        s=Service('/home/hamed/project/learn/home_predict/utils/chromedriver')
+        s=Service('utils/chromedriver')
         self.driver1 =  webdriver.Chrome(service=s,options=op)
         self.driver1.get(self.url)
         self.driver2 =  webdriver.Chrome(service=s,options=op)
@@ -21,7 +19,6 @@ class Divar():
 
         self.check_urls = list()
         self.init_db()
-        self.run()
 
 
     def get_floor(self, row):
@@ -123,8 +120,8 @@ class Divar():
         column = self.driver2.find_elements(By.XPATH,value="//span[@class = 'kt-group-row-item__value']")
         property_col = self.driver2.find_elements(By.XPATH,value="//span[@class = 'kt-group-row-item__value kt-body kt-body--stable']")
         elavator = 0 if property_col[0].text == "آسانسور ندارد" else 1
-        parking = 0 if property_col[0].text == "پارکینگ ندارد" else 1
-        Warehouse = 0 if property_col[0].text == "انباری ندارد" else 1
+        parking = 0 if property_col[1].text == "پارکینگ ندارد" else 1
+        Warehouse = 0 if property_col[2].text == "انباری ندارد" else 1
         area = int(unidecode(column[0].text))
         age = int(unidecode(column[1].text.split()[-1]))
         if(column[2].text == "بدون اتاق"):
@@ -144,29 +141,36 @@ class Divar():
     def init_db(self):
         self.db = DBMongo()
     def run(self):
-        while True:
-            try:
-                all_results1 =self.driver1.find_elements(By.XPATH,value="//div[@class = 'post-card-item kt-col-6 kt-col-xxl-4']")
-                all_results2 =self.driver1.find_elements(By.XPATH,value="//section[@class = 'post-card-item kt-col-6 kt-col-xxl-4']")
-                all_results = all_results1 if all_results1 != [] else all_results2
-                for result in all_results:
-                    if all_results1 != []:
-                        href_class_1 = result.find_elements(By.XPATH,value="./a[@class = 'kt-post-card kt-post-card--outlined']")
-                        href_class_2 = result.find_elements(By.XPATH,value="./a[@class = 'kt-post-card kt-post-card--outlined kt-post-card--has-chat']")
-                        address = href_class_1 if href_class_1 != [] else href_class_2
-                    elif all_results2 != []:
-                        address = result.find_elements(By.XPATH,value=".//a")
-                    one_url = address[0].get_attribute('href')
-                    if (not self.check_duplicate(one_url)):
-                        self.get_one_home_info(one_url)
-                self.driver1.refresh()
-                print("#"*100)
-                time.sleep(60)
-            except: 
-                pass
+        self.driver1.refresh()
+        all_results1 =self.driver1.find_elements(By.XPATH,value="//div[@class = 'post-card-item kt-col-6 kt-col-xxl-4']")
+        all_results2 =self.driver1.find_elements(By.XPATH,value="//section[@class = 'post-card-item kt-col-6 kt-col-xxl-4']")
+        all_results3 =self.driver1.find_elements(By.XPATH,value="//div[@class = 'waf972 wbee95 we9d46']")
+        all_results = all_results1 if all_results1 != [] else all_results2 if all_results2 != [] else all_results3
+        for i,result in tqdm(enumerate(all_results)):
+            if all_results1 != []:
+                href_class_1 = result.find_elements(By.XPATH,value="./a[@class = 'kt-post-card kt-post-card--outlined kt-post-card--padded kt-post-card--has-action']")
+                href_class_2 = result.find_elements(By.XPATH,value="./a[@class = 'kt-post-card kt-post-card--outlined kt-post-card--padded kt-post-card--has-action kt-post-card--has-chat']")
+                # href_class_1=all_results[i].find_elements(By.ID,value=all_results[i].id)
+                href_class_3=result.find_elements(By.XPATH,value=".//a")
+                address = href_class_1 if href_class_1 != [] else href_class_2
+                address=address if address!=[] else href_class_3
+                one_url = address[0].get_attribute('href')
+            elif all_results2 != [] or all_results3 != []:
+                address = result.find_elements(By.XPATH,value=".//a")
+                one_url = address[0].get_attribute('href')
+            if (not self.check_duplicate(one_url)):
+                self.get_one_home_info(one_url)
+
                 
 
 if __name__ == "__main__":
-    Divar()
+    divar = Divar()
+    while True:
+        try:
+            divar.run()
+            time.sleep(60)
+        except Exception as e:
+            print(e)
+            divar = Divar()
     
 
