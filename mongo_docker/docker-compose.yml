@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+
+  mongo:
+    image: "mongo:latest"
+    container_name: "mongo_local"
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=default
+      - MONGO_INITDB_ROOT_USERNAME=hamed
+      - MONGO_INITDB_ROOT_PASSWORD=h123
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./volumes/mongo_volume:/data/db
+    ports:
+      - 27027:27017
+    networks:
+      - mongo_local_net
+
+networks:
+  mongo_local_net:
+    driver: bridge

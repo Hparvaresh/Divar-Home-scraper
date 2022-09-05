@@ -16,20 +16,18 @@ from pymongo import MongoClient, DESCENDING
 
 class DBMongo:
 
-    def __init__(self):
+    def __init__(self,type):
         
-        # config = self.get_mongodb_config()
-        # connection_url = f"mongodb://{config['host']}:{config['port']}"
-        connection_url = f"mongodb://localhost:27017"
-
-
+        config = self.get_mongodb_config()
+        connection_url = f"mongodb://{config['user']}:{config['pass']}@{config['host']}:{config['port']}/"
+        self.type = type
+        # connection_url = "mongodb://hamed:h123@localhost:27027/?authMechanism=DEFAULT"
         self.client = MongoClient(connection_url)
-        # self.db = self.client[config['name']]
-        # self.collection = self.db[config['collection']]
-        self.db = self.client["divar_db"]
-        self.collection_all = self.db["all_home_info"]
-        self.collection_day = self.db["day_home_info"]
-
+        self.db = self.client[config['name']]
+        if self.type == "home":
+            self.collection_home_all = self.db[config['collection_home_all']]
+        if self.type == "car":
+            self.collection_car_all = self.db[config['collection_car_all']]
 
         # self.collection.create_index([("id", DESCENDING)], unique=True)
 
@@ -37,38 +35,47 @@ class DBMongo:
 
         mongodb_config = {
 
-            "host": os.environ.get("MONGO_HOST"),
-            "port": os.environ.get("MONGO_PORT"),
-            "user": os.environ.get("MONGO_USERNAME"),
-            "pass": os.environ.get("MONGO_PASSWORD"),
-            "name": os.environ.get("MONGO_NAME"),
-            "collection": os.environ.get("MONGO_COLLECTION")
+            "host": "localhost",
+            "port": 27027,
+            "user": "hamed",
+            "pass": "h123",
+            "name": "divar_db",
+            "collection_home_all":  "collection_home_all",
+            "collection_car_all": "collection_car_all"
         }
 
         return mongodb_config
 
     def InsertItems(self, items): 
-
-        for item in items:
-            try:
-                result = self.collection_all.insert_one(item)
-            except Exception as e:
-                pass
+        if self.type == "home":
+            for item in items:
+                try:
+                    result = self.collection_home_all.insert_one(item)
+                except Exception as e:
+                    pass
+        if self.type == "car":
+            for item in items:
+                try:
+                    result = self.collection_car_all.insert_one(item)
+                except Exception as e:
+                    pass
+            
 
     def InsertItem(self, item): 
-        try:
-            self.collection_all.insert_one(item)
-            self.collection_day.insert_one(item)
-        except Exception as e:
-            pass
+        if self.type == "home":
+            try:
+                self.collection_home_all.insert_one(item)
+            except Exception as e:
+                print(e)
+        if self.type == "car":
+            try:
+                self.collection_car_all.insert_one(item)
+            except Exception as e:
+                print(e)
 
     def FetchOneItem(self):
         return  self.collection.find_one()
 
-    def FetchAllItem(self):
-        return  self.collection_day.find({})
 
-    def DropCollection(self):
-        self.collection.drop()
 
 
