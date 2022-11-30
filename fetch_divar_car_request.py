@@ -1,3 +1,4 @@
+from os import PRIO_PGRP
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -60,11 +61,12 @@ class Divar_car():
         return time.time() - value_decrease_time*base_decrease_time
 
     def get_price(self, row_name):
-        price= row_name.replace("قیمت", "").replace("تومان", "").replace(" ", "")
-        if price in ["توافقی" , "برای معاوضه", "برایمعاوضه"]:
+        price= row_name.replace("قیمت", "").replace("تومان", "").replace(" ", "").replace("فروشنقدی","")
+        if price in ['توافقی' , 'برای معاوضه', 'برایمعاوضه', 'غیرقابلنمایش']:
             price = -100
         else :
-            price = int(unidecode(price).replace(",",""))/float(1000000)
+            price2 =    price.replace("٬","")
+            price2 = int(unidecode(price2))/float(1000000)
         return price
 
     def get_one_car_info(self, url):
@@ -142,9 +144,10 @@ class Divar_car():
         all_results1 =base_page_soup.find_all("div",class_ = 'post-card-item kt-col-6 kt-col-xxl-4')
         all_results2 =base_page_soup.find_all("section",class_ = 'post-card-item kt-col-6 kt-col-xxl-4')
         all_results3 =base_page_soup.find_all("div",class_ = 'waf972 wbee95 we9d46')
-        all_results = all_results1 if all_results1  else all_results2 if all_results2 else all_results3
+        all_results4 =base_page_soup.find_all("div",class_ = 'post-card-item-_-af972 kt-col-6-_-bee95 kt-col-xxl-4-_-e9d46')
+        all_results = all_results1 if all_results1  else all_results2 if all_results2 else all_results3 if all_results3 else all_results4
         for result in tqdm(all_results):
-            if all_results1:
+            if all_results1 or all_results4:
                 href_class_2 = result.find_all("a",class_ = 'kt-post-card kt-post-card--outlined kt-post-card--padded kt-post-card--has-action kt-post-card--has-chat')
                 href_class_1 = result.find_all("a",class_ = 'kt-post-card kt-post-card--outlined kt-post-card--padded kt-post-card--has-action')
                 # href_class_1=all_results[i].find_elements(By.ID,value=all_results[i].id)
@@ -160,12 +163,11 @@ class Divar_car():
 
 if __name__ == "__main__":
     divar = Divar_car()
-    # while True:
-    #     try:
-    divar.run()
-    time.sleep(20)
-        # except Exception as e:
-        #     print(e)
-        #     divar = Divar()
+    while True:
+        try:
+            divar.run()
+            time.sleep(20)
+        except Exception as e:
+            print(e)
     
 

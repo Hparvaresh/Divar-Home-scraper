@@ -25,11 +25,13 @@ class DBMongo:
         self.client = MongoClient(connection_url)
         self.db = self.client[config['name']]
         if self.type == "home":
-            self.collection_home_all = self.db[config['collection_home_all']]
+            self.collection = self.db[config['collection_home_all']]
+        if self.type == "number":
+            self.collection = self.db[config['collection_number_all']]
         if self.type == "car":
-            self.collection_car_all = self.db[config['collection_car_all']]
+            self.collection = self.db[config['collection_car_all']]
 
-        # self.collection.create_index([("id", DESCENDING)], unique=True)
+        # self.collection.create_index([("url", DESCENDING)], unique=True)
 
     def get_mongodb_config(self):
 
@@ -41,37 +43,25 @@ class DBMongo:
             "pass": "h123",
             "name": "divar_db",
             "collection_home_all":  "collection_home_all",
-            "collection_car_all": "collection_car_all"
+            "collection_car_all": "collection_car_all",
+            "collection_number_all" : "collection_number_all"
         }
 
         return mongodb_config
 
     def InsertItems(self, items): 
-        if self.type == "home":
-            for item in items:
-                try:
-                    result = self.collection_home_all.insert_one(item)
-                except Exception as e:
-                    pass
-        if self.type == "car":
-            for item in items:
-                try:
-                    result = self.collection_car_all.insert_one(item)
-                except Exception as e:
-                    pass
+        for item in items:
+            try:
+                result = self.collection(item)
+            except Exception as e:
+                pass
             
 
     def InsertItem(self, item): 
-        if self.type == "home":
-            try:
-                self.collection_home_all.insert_one(item)
-            except Exception as e:
-                print(e)
-        if self.type == "car":
-            try:
-                self.collection_car_all.insert_one(item)
-            except Exception as e:
-                print(e)
+        # try:
+        self.collection.insert_one(item)
+        # except Exception as e:
+        #     print(e)
 
     def FetchOneItem(self):
         return  self.collection.find_one()
